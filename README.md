@@ -4,6 +4,8 @@ It takes care of selecting the correct Proton version, compatdata and WINEPREFIX
 
 This script shouldn't require you to install any dependencies on GNU/Linux systems.
 
+ATTENTION: Use at your own risk. I am not responsible for broken Proton prefixes, games or apps ceasing to work properly, etc.
+
 ## Usage
        
        protontool [-ht] appid <proton args>
