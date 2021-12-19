@@ -2,8 +2,26 @@
 
 # Run stuff with proton under an app's wineprefix
 
-# may not be the same for everyone
-export STEAM_COMPAT_CLIENT_INSTALL_PATH="/home/$USER/.steam/steam"
+STEAM_DIRS=(
+	"${XDG_DATA_HOME:-$HOME/.local/share}/Steam"
+	"$HOME/.steam/steam"
+	"$HOME/Steam"
+)
+
+if [ -z "$STEAM_COMPAT_CLIENT_INSTALL_PATH" ]; then
+	for d in "${STEAM_DIRS[@]}"
+	do
+		if [ -d "$d/steamapps" ]; then
+			export STEAM_COMPAT_CLIENT_INSTALL_PATH="$d"
+			break
+		fi
+	done
+fi
+
+if [ -z "$STEAM_COMPAT_CLIENT_INSTALL_PATH" ]; then
+	>&2 echo "Could not find Steam install path. Set the path in the STEAM_COMPAT_CLIENT_INSTALL_PATH environment variable."
+	exit 1
+fi
 
 usage()
 {
