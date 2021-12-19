@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# Run stuff with proton under an app's wineprefix
+
+# may not be the same for everyone
+export STEAM_COMPAT_CLIENT_INSTALL_PATH="/home/$USER/.steam/steam"
+
+usage()
+{
+	echo "usage: `basename "$0"` [-ht] appid <proton args>"
+	echo
+	echo "options:"
+	echo "   -h   show this help text"
+	echo "   -t   treat appid as app name"
+}
+
+valueofkey()
+{
+	sed -n "s/^.*\"$1\"\t\t\"\(.*\)\"/\1/p"
+}
+
+name2appid()
+{
+	NAME=$1
+	IFS=$'\n'
+	for lib in $STEAM_LIBS
+	do
+		for mnf in "$lib"/steamapps/*.acf
+		do
+			MNF_NAME=$(valueofkey name < "$mnf")
+			if [[ "$MNF_NAME" == "$NAME" ]]; then
+				valueofkey appid < "$mnf"
+				return 0
+			fi
+		done
+	done
+	return 1
+}
+
+while getopts 'ht' o
+do
+	case "$o" in
+		h)
+			echo "A tool that facilitates running executables and doing other stuff in a proton wineprefix."
+			echo
+			usage
+			echo
+			echo "example:"
+			echo "   $ `basename "$0"` 377160 run modorganizer.exe"
+			echo "   $ `basename "$0"` -t \"Fallout 4\" run modorganizer.exe"
+			exit
+			;;
+		t)
+			lookup_appid=true
+			;;
+	esac
+done
+
+STEAM_LIBS=$(valueofkey path < "$STEAM_COMPAT_CLIENT_INSTALL_PATH/steamapps/libraryfolders.vdf")
+
+shift $((OPTIND-1))
+APP="$1"
+shift
+PROTON_CMD="$@"
+
+if [ -z "$APP" ] || [ -z "$PROTON_CMD" ]; then
+	>&2 echo "missing arguments"
+	usage
+	exit 2
+fi
+
+if [ "$lookup_appid" = true ]; then
+	APPID=$(name2appid "$APP")
+	if [ $? -ne 0 ]; then
+		>&2 echo "cannot resolve appid of $APP"
+		exit 1
+	fi
+else
+	APPID=$APP
+fi
+
+# look for the app's compatdata path
+IFS=$'\n'
+for lib in $STEAM_LIBS
+do
+	if [ ! -d "$lib" ]; then
+		>&2 echo "$lib is marked as a library, but is not a directory."
+		continue
+	fi
+
+	export STEAM_COMPAT_DATA_PATH="$lib/steamapps/compatdata/$APPID"
+	[ -d "$STEAM_COMPAT_DATA_PATH" ] && break
+done
+
+if [ ! -d "$STEAM_COMPAT_DATA_PATH" ]; then
+	>&2 echo "could not find compatdata for $APPID"
+	exit 1
+fi
+
+export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
+
+PROTON_ROOT=$(sed -n '2p' "$STEAM_COMPAT_DATA_PATH/config_info" | sed 's/\/dist.*//')
+
+if [ ! -d "$PROTON_ROOT" ]; then
+	>&2 echo "could not find proton"
+	exit 1
+fi
+
+>&2 echo "STEAM_COMPAT_CLIENT_INSTALL_PATH=\"$STEAM_COMPAT_CLIENT_INSTALL_PATH\""
+>&2 echo "STEAM_COMPAT_DATA_PATH=\"$STEAM_COMPAT_DATA_PATH\""
+>&2 echo "WINEPREFIX=\"$WINEPREFIX\""
+
+IFS=$' \t\n'
+"$PROTON_ROOT/proton" $PROTON_CMD
