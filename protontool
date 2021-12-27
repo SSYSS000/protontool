@@ -117,7 +117,7 @@ fi
 
 export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
 
-PROTON_ROOT=$(sed -n '2p' "$STEAM_COMPAT_DATA_PATH/config_info" | sed 's/\/dist.*//')
+PROTON_ROOT=$(sed -n '2p' "$STEAM_COMPAT_DATA_PATH/config_info" | sed -E 's/\/(dist|files).*//')
 
 if [ ! -d "$PROTON_ROOT" ]; then
 	>&2 echo "could not find proton"
