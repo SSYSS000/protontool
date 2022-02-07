@@ -45,7 +45,7 @@ name2appid()
 	do
 		for mnf in "$lib"/steamapps/*.acf
 		do
-			MNF_NAME=$(valueofkey name < "$mnf")
+			MNF_NAME=$(valueofkey installdir < "$mnf")
 			if [[ "$MNF_NAME" == "$NAME" ]]; then
 				valueofkey appid < "$mnf"
 				return 0
