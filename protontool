@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run stuff with proton under an app's wineprefix
+# Run executables in a Proton wineprefix
 
 STEAM_DIRS=(
 	"${XDG_DATA_HOME:-$HOME/.local/share}/Steam"
@@ -19,7 +19,7 @@ if [ -z "$STEAM_COMPAT_CLIENT_INSTALL_PATH" ]; then
 fi
 
 if [ -z "$STEAM_COMPAT_CLIENT_INSTALL_PATH" ]; then
-	>&2 echo "Could not find Steam install path. Set the path in the STEAM_COMPAT_CLIENT_INSTALL_PATH environment variable."
+	>&2 echo "Unable to locate Steam install directory. Please set the \"STEAM_COMPAT_CLIENT_INSTALL_PATH\" environment variable and try again."
 	exit 1
 fi
 
@@ -29,7 +29,7 @@ usage()
 	echo
 	echo "options:"
 	echo "   -h   show this help text"
-	echo "   -t   treat appid as app name"
+	echo "   -t   treat appid as the name of the app's install directory"
 }
 
 valueofkey()
@@ -59,7 +59,7 @@ while getopts 'ht' o
 do
 	case "$o" in
 		h)
-			echo "A tool that facilitates running executables and doing other stuff in a proton wineprefix."
+			echo "Run an executable in a Proton wineprefix."
 			echo
 			usage
 			echo
@@ -102,7 +102,7 @@ IFS=$'\n'
 for lib in $STEAM_LIBS
 do
 	if [ ! -d "$lib" ]; then
-		>&2 echo "$lib is marked as a library, but is not a directory."
+		>&2 echo "library path to a non-directory: $lib"
 		continue
 	fi
 
@@ -111,7 +111,7 @@ do
 done
 
 if [ ! -d "$STEAM_COMPAT_DATA_PATH" ]; then
-	>&2 echo "could not find compatdata for $APPID"
+	>&2 echo "cannot locate compatdata for $APPID"
 	exit 1
 fi
 
@@ -120,7 +120,7 @@ export WINEPREFIX="$STEAM_COMPAT_DATA_PATH/pfx"
 PROTON_ROOT=$(sed -n '2p' "$STEAM_COMPAT_DATA_PATH/config_info" | sed -E 's/\/(dist|files).*//')
 
 if [ ! -d "$PROTON_ROOT" ]; then
-	>&2 echo "could not find proton"
+	>&2 echo "cannot locate proton"
 	exit 1
 fi
 
