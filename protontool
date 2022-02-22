@@ -30,6 +30,7 @@ usage()
 	echo "options:"
 	echo "   -h   show this help text"
 	echo "   -t   treat appid as the name of the app's install directory"
+	echo "	 -v	  print relevant environment variables"
 }
 
 valueofkey()
@@ -55,7 +56,7 @@ name2appid()
 	return 1
 }
 
-while getopts 'ht' o
+while getopts 'htv' o
 do
 	case "$o" in
 		h)
@@ -70,6 +71,9 @@ do
 			;;
 		t)
 			lookup_appid=true
+			;;
+		v)
+			verbose=true
 			;;
 	esac
 done
@@ -124,9 +128,12 @@ if [ ! -d "$PROTON_ROOT" ]; then
 	exit 1
 fi
 
->&2 echo "STEAM_COMPAT_CLIENT_INSTALL_PATH=\"$STEAM_COMPAT_CLIENT_INSTALL_PATH\""
->&2 echo "STEAM_COMPAT_DATA_PATH=\"$STEAM_COMPAT_DATA_PATH\""
->&2 echo "WINEPREFIX=\"$WINEPREFIX\""
+if [ "$verbose" = true ]; then
+	>&2 echo launching proton using environment variables:
+	>&2 printf "STEAM_COMPAT_CLIENT_INSTALL_PATH=%q\n" "$STEAM_COMPAT_CLIENT_INSTALL_PATH"
+	>&2 printf "STEAM_COMPAT_DATA_PATH=%q\n" "$STEAM_COMPAT_DATA_PATH"
+	>&2 printf "WINEPREFIX=%q\n" "$WINEPREFIX"
+fi
 
 IFS=$' \t\n'
 "$PROTON_ROOT/proton" $PROTON_CMD
